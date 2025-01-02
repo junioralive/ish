@@ -56,7 +56,6 @@
       font-size: 1.2rem;
       text-align: center;
     }
-
     .code-container {
       display: flex;
       flex-direction: column;
@@ -143,10 +142,7 @@
     <h1>ish <small style="font-weight:normal;">"because why not !"</small></h1>
     <p style="text-align:center;">
       Welcome to the <strong>ish</strong> API documentation. Enjoy free AI for your projects—because you deserve it!<br/>
-      If you need an API key, please join our Discord channel for now:
-      <a href="https://discord.gg/YOUR-DISCORD-INVITE" target="_blank">**Our Discord**</a>
-      <br/>
-      We are currently offering unlimited free usage—later we might change our mind. Until then, enjoy!
+      If you need an API key, please join our Discord channel for now. We are offering unlimited free usage—later we might change our mind. Until then, enjoy!
     </p>
 
     <div class="section-title">Using Your API Key</div>
@@ -272,10 +268,51 @@ sendChat();
       </div>
     </div>
 
-    <div class="section-title">Other Endpoint</div>
-    <ul>
-      <li><strong>GET /models</strong> – List available models (requires <code>X-API-KEY</code>)</li>
+    <div class="section-title">Available Models</div>
+    <p>Below is a list of currently supported models. You can pick any of these for your <code>"model"</code> field:</p>
+    <ul style="max-width:800px;">
+      <li><code>@hf/thebloke/deepseek-coder-6.7b-base-awq</code></li>
+      <li><code>@hf/thebloke/deepseek-coder-6.7b-instruct-awq</code></li>
+      <li><code>@cf/deepseek-ai/deepseek-math-7b-instruct</code></li>
+      <li><code>@cf/thebloke/discolm-german-7b-v1-awq</code></li>
+      <li><code>@cf/tiiuae/falcon-7b-instruct</code></li>
+      <li><code>@hf/google/gemma-7b-it</code></li>
+      <li><code>@hf/thebloke/discolm-german-7b-v1-awq</code></li>
+      <li><code>@hf/thebloke/llama-2-13b-chat-awq</code></li>
+      <li><code>@cf/meta/llama-2-7b-chat-fp16</code></li>
+      <li><code>@cf/meta/llama-2-7b-chat-int8</code></li>
+      <li><code>@cf/meta/llama-3-8b-instruct</code></li>
+      <li><code>@cf/meta/llama-3-8b-instruct-awq</code></li>
+      <li><code>@cf/meta/llama-3.1-8b-instruct</code></li>
+      <li><code>@cf/meta/llama-3.1-8b-instruct-awq</code></li>
+      <li><code>@cf/meta/llama-3.1-8b-instruct-fp8</code></li>
+      <li><code>@cf/meta/llama-3.2-11b-vision-instruct</code></li>
+      <li><code>@cf/meta/llama-3.2-1b-instruct</code></li>
+      <li><code>@cf/meta/llama-3.2-3b-instruct</code></li>
+      <li><code>@cf/meta/llama-3.3-70b-instruct-fp8-fast</code></li>
+      <li><code>@hf/thebloke/llamaguard-7b-awq</code></li>
+      <li><code>@hf/meta-llama/meta-llama-3-8b-instruct</code></li>
+      <li><code>@cf/mistral/mistral-7b-instruct-v0.1</code></li>
+      <li><code>@hf/thebloke/mistral-7b-instruct-v0.1-awq</code></li>
+      <li><code>@hf/mistral/mistral-7b-instruct-v0.2</code></li>
+      <li><code>@hf/thebloke/neural-chat-7b-v3-1-awq</code></li>
+      <li><code>@cf/openchat/openchat-3.5-0106</code></li>
+      <li><code>@hf/thebloke/openhermes-2.5-mistral-7b-awq</code></li>
+      <li><code>@cf/microsoft/phi-2</code></li>
+      <li><code>@cf/qwen/qwen1.5-0.5b-chat</code></li>
+      <li><code>@cf/qwen/qwen1.5-1.8b-chat</code></li>
+      <li><code>@cf/qwen/qwen1.5-14b-chat-awq</code></li>
+      <li><code>@cf/qwen/qwen1.5-7b-chat-awq</code></li>
+      <li><code>@cf/defog/sqlcoder-7b-2</code></li>
+      <li><code>@hf/nexusflow/starling-lm-7b-beta</code></li>
+      <li><code>@cf/tinyllama/tinyllama-1.1b-chat-v1.0</code></li>
+      <li><code>@cf/fblgit/una-cybertron-7b-v2-bf16</code></li>
+      <li><code>@hf/thebloke/zephyr-7b-beta-awq</code></li>
     </ul>
+
+    <p style="text-align:center;">
+      To fetch a live list, call <strong>GET /models</strong> with your valid <code>X-API-KEY</code>.
+    </p>
   </div>
 </body>
 </html>
