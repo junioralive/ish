@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ish "because why not !" - Documentation</title>
+  <style>
+    /* Dark background, glass effect container, minimal blue accent */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0B0E12;
+      font-family: 'Arial', sans-serif;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 900px;
+      width: 90%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      text-align: center;
+      color: #6DB2F8; /* Blue accent */
+      margin-bottom: 1rem;
+    }
+    p, li, pre {
+      max-width: 800px;
+      line-height: 1.5;
+    }
+    ul {
+      margin-left: 1.2rem;
+    }
+    a {
+      color: #6DB2F8;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .section-title {
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+      color: #6DB2F8;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+
+    .code-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1rem 0;
+      width: 100%;
+    }
+    .copy-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: #242A31;
+      color: #6DB2F8;
+      border: 1px solid #6DB2F8;
+      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    pre {
+      background: #0D1117;
+      border: 1px solid #6DB2F8;
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 0.95rem;
+      overflow-x: auto;
+      margin: 0;
+    }
+    .toggle-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+    .toggle-buttons button {
+      background: #242A31;
+      color: #6DB2F8;
+      border: 1px solid #6DB2F8;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .code-block {
+      display: none;
+    }
+    .code-block.active {
+      display: block;
+    }
+  </style>
+
+  <script>
+    // Function to toggle which code block is shown
+    function showCodeBlock(id) {
+      // Hide all
+      document.querySelectorAll('.code-block').forEach(el => el.classList.remove('active'));
+      // Show the selected
+      document.getElementById(id).classList.add('active');
+    }
+
+    // Copy code to clipboard
+    function copyCode(blockId) {
+      const codeBlock = document.getElementById(blockId);
+      const codeText = codeBlock.innerText;
+      navigator.clipboard.writeText(codeText)
+        .then(() => {
+          alert("Code copied!");
+        })
+        .catch(err => {
+          console.error("Error copying code: ", err);
+        });
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>ish <small style="font-weight:normal;">"because why not !"</small></h1>
+    <p style="text-align:center;">
+      Welcome to the <strong>ish</strong> API documentation. Enjoy free AI for your projects—because you deserve it!<br/>
+      If you need an API key, please join our Discord channel for now:
+      <a href="https://discord.gg/YOUR-DISCORD-INVITE" target="_blank">**Our Discord**</a>
+      <br/>
+      We are currently offering unlimited free usage—later we might change our mind. Until then, enjoy!
+    </p>
+
+    <div class="section-title">Using Your API Key</div>
+    <ul>
+      <li>Once you have an API key from our Discord, include it in the HTTP header as <code>X-API-KEY: YOUR-API-KEY</code>.</li>
+    </ul>
+
+    <div class="section-title">Chat Completions Endpoint</div>
+    <p><strong>POST /chat/v1/completions</strong></p>
+    <p style="text-align:center;">Example JSON body:</p>
+    <div class="copy-container">
+      <button class="copy-btn" onclick="copyCode('json-body')">Copy</button>
+      <pre id="json-body">
+{
+  "model": "@cf/meta/llama-3.1-8b-instruct",
+  "system_prompt": "You are a helpful assistant.",
+  "messages": [
+    {"role": "user", "content": "Hello, how are you?"}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 2048,
+  "stream": false
+}
+      </pre>
+    </div>
+
+    <p style="text-align:center;">
+      Below are code examples in <strong>cURL</strong>, <strong>Python</strong>, and <strong>Node.js</strong>.
+      Use the buttons to switch between them:
+    </p>
+
+    <div class="toggle-buttons">
+      <button onclick="showCodeBlock('curl-block')">cURL</button>
+      <button onclick="showCodeBlock('python-block')">Python</button>
+      <button onclick="showCodeBlock('node-block')">Node.js</button>
+    </div>
+
+    <!-- cURL code block -->
+    <div class="code-block active" id="curl-block">
+      <div class="copy-container">
+        <button class="copy-btn" onclick="copyCode('curl-code')">Copy</button>
+        <pre id="curl-code">
+curl -X POST "http://localhost:5000/chat/v1/completions" \
+-H "Content-Type: application/json" \
+-H "X-API-KEY: 12345" \
+-d '{
+  "model": "@cf/meta/llama-3.1-8b-instruct",
+  "system_prompt": "You are a helpful assistant.",
+  "messages": [
+    {"role": "user", "content": "Hello, how are you?"}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 2048,
+  "stream": false
+}'
+        </pre>
+      </div>
+    </div>
+
+    <!-- Python code block -->
+    <div class="code-block" id="python-block">
+      <div class="copy-container">
+        <button class="copy-btn" onclick="copyCode('python-code')">Copy</button>
+        <pre id="python-code">
+import requests
+
+url = "http://localhost:5000/chat/v1/completions"
+headers = {
+    "X-API-KEY": "12345",
+    "Content-Type": "application/json"
+}
+data = {
+    "model": "@cf/meta/llama-3.1-8b-instruct",
+    "system_prompt": "You are a helpful assistant.",
+    "messages": [
+        {"role": "user", "content": "Hello, how are you?"}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "stream": False
+}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.json())
+        </pre>
+      </div>
+    </div>
+
+    <!-- Node.js code block -->
+    <div class="code-block" id="node-block">
+      <div class="copy-container">
+        <button class="copy-btn" onclick="copyCode('node-code')">Copy</button>
+        <pre id="node-code">
+const axios = require('axios');
+
+async function sendChat() {
+  const url = "http://localhost:5000/chat/v1/completions";
+  const headers = {
+    "X-API-KEY": "12345",
+    "Content-Type": "application/json"
+  };
+  const data = {
+    model: "@cf/meta/llama-3.1-8b-instruct",
+    system_prompt: "You are a helpful assistant.",
+    messages: [
+      { role: "user", content: "Hello, how are you?" }
+    ],
+    temperature: 0.7,
+    max_tokens: 2048,
+    stream: false
+  };
+
+  try {
+    const response = await axios.post(url, data, { headers });
+    console.log(response.data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+sendChat();
+        </pre>
+      </div>
+    </div>
+
+    <div class="section-title">Other Endpoint</div>
+    <ul>
+      <li><strong>GET /models</strong> – List available models (requires <code>X-API-KEY</code>)</li>
+    </ul>
+  </div>
+</body>
+</html>
