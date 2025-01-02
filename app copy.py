@@ -9,32 +9,8 @@ import uuid
 # CloudflareRequester
 # ---------------------------------------------------
 class CloudflareRequester:
-    def __init__(
-        self,
-        model="@cf/meta/llama-3.1-8b-instruct",
-        # Additional parameters to tweak CloudScraper
-        interpreter="native",  # Or 'nodejs', 'js2py', 'chakra', etc.
-        ecdhCurve="secp384r1", # Another ECDH curve might help with TLS handshake
-        debug=False
-    ):
-        # Example usage of advanced parameters:
-        self.scraper = cloudscraper.create_scraper(
-            interpreter=interpreter,
-            ecdhCurve=ecdhCurve,
-            debug=debug,
-            # Force a custom or random "browser" user agent:
-            browser={"browser": "chrome", "platform": "windows", "desktop": True, "mobile": False},
-            # If you'd like to specify a custom user-agent or cipher suite, you could do:
-            # cipherSuite="ECDHE-ECDSA-AES128-GCM-SHA256",
-            # user_agent="MyCustomAgent/1.0"
-        )
-
-        # Warm up by hitting the root domain—so CloudScraper attempts to solve any challenge
-        # This may store cookies in the scraper before calling /api/inference
-        try:
-            self.scraper.get("https://playground.ai.cloudflare.com")
-        except Exception as e:
-            print(f"[Warm Up] Error warming up Cloudscraper: {e}")
+    def __init__(self, model="@cf/meta/llama-3.1-8b-instruct"):
+        self.scraper = cloudscraper.create_scraper()
 
         # Endpoints
         self.chat_endpoint = "https://playground.ai.cloudflare.com/api/inference"
@@ -43,8 +19,6 @@ class CloudflareRequester:
         self.headers = {
             "Accept": "text/event-stream",
             "Content-Type": "application/json",
-            # The user agent is often overridden by CloudScraper’s internal logic
-            # but we can keep a fallback here.
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         }
         self.model = model
@@ -78,10 +52,6 @@ class CloudflareRequester:
         Send the Chat request to Cloudflare's Playground API.
         """
         payload = self.create_payload(system_prompt, messages, temperature, max_tokens, stream)
-
-        # Optional: re-warm the domain each request, in case ephemeral serverless resets cookies
-        # self.scraper.get("https://playground.ai.cloudflare.com")
-
         response = self.scraper.post(
             self.chat_endpoint,
             headers=self.headers,
@@ -90,8 +60,6 @@ class CloudflareRequester:
         )
 
         if not response.ok:
-            # Raise an exception showing status code and text
-            # This will bubble up to your Flask route
             raise Exception(f"Request failed: {response.status_code} {response.reason}")
 
         return self._process_stream(response) if stream else self._process_full(response)
@@ -121,11 +89,8 @@ class CloudflareRequester:
 
     def get_models(self):
         """
-        Fetch the list of models from the Cloudflare Playground.
+        Fetch the list of models from Cloudflare Playground.
         """
-        # Optional: warm up again before calling /api/models
-        # self.scraper.get("https://playground.ai.cloudflare.com")
-
         response = self.scraper.get(self.models_endpoint, headers=self.headers)
         if not response.ok:
             raise Exception(f"Model fetch failed: {response.status_code} {response.reason}")
@@ -136,6 +101,7 @@ class CloudflareRequester:
 # ---------------------------------------------------
 app = Flask(__name__)
 
+# In-memory API key storage (demo use; replace with DB in production).
 API_KEYS = {
     "ish_ajl27Qo8pHgq5jZzIdoC178MpOk0oKWExGkn": "active",
     "ish_XD8IdgDTbMPPQI9AaBfiX0E1JjKjxswU4pfL": "active",
@@ -158,13 +124,25 @@ def require_api_key(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ---------------------------------------------------
+# Serve index.html at root
+# ---------------------------------------------------
 @app.route("/")
 def documentation():
+    """
+    Renders our custom dark-themed index.html with code blocks + copy buttons.
+    """
     return render_template("index.html")
 
+# ---------------------------------------------------
+# Chat Completions
+# ---------------------------------------------------
 @app.route("/chat/v1/completions", methods=["POST"])
 @require_api_key
 def chat_completions():
+    """
+    POST /chat/v1/completions
+    """
     try:
         data = request.json
         if not data:
@@ -180,15 +158,10 @@ def chat_completions():
         if not messages:
             return jsonify({"error": "At least one message is required."}), 400
 
-        # Example of passing advanced arguments:
-        requester = CloudflareRequester(
-            model=model,
-            interpreter="native",   # or "nodejs", "js2py", "chakra", etc.
-            ecdhCurve="secp384r1",  # or "prime256v1"
-            debug=False             # turn on if you want verbose debugging
-        )
+        requester = CloudflareRequester(model=model)
 
         if stream:
+            # Return a streaming response (SSE)
             generator = requester.send_request(
                 system_prompt=system_prompt,
                 messages=messages,
@@ -198,6 +171,7 @@ def chat_completions():
             )
             return Response(generator, content_type="text/event-stream")
 
+        # Non-streaming
         response_text = requester.send_request(
             system_prompt=system_prompt,
             messages=messages,
@@ -229,29 +203,65 @@ def chat_completions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ---------------------------------------------------
+# List Models
+# ---------------------------------------------------
 @app.route("/models", methods=["GET"])
 @require_api_key
 def list_models():
+    """
+    GET /models
+    """
     try:
-        # Example: pass advanced arguments if desired
-        requester = CloudflareRequester(
-            model="@cf/meta/llama-3.1-8b-instruct",
-            interpreter="native",
-            ecdhCurve="secp384r1",
-            debug=False
-        )
+        requester = CloudflareRequester()
         models_data = requester.get_models()
         return jsonify(models_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ---------------------------------------------------
+# Generate a New API Key
+# ---------------------------------------------------
 @app.route("/generate_api_key", methods=["POST"])
 def generate_api_key():
-    return jsonify({"message": "API key generated successfully", "api_key": "Wtf are you doing here?, it's free lol!"})
+    # """
+    # POST /generate_api_key
+    # { "api_key": "SOME-NEW-KEY" }
+    # """
+    # new_api_key = request.json.get("api_key")
+    # if not new_api_key:
+    #     return jsonify({"error": "API key is required"}), 400
 
+    # if new_api_key in API_KEYS:
+    #     return jsonify({"error": "API key already exists"}), 400
+
+    # API_KEYS[new_api_key] = "active"
+    # return jsonify({"message": "API key generated successfully", "api_key": new_api_key})
+    return jsonify({"message": "API key generated successfully", "api_key": "Wtf are you doing here?, its free lol!"})
+
+
+# ---------------------------------------------------
+# Revoke an API Key
+# ---------------------------------------------------
 @app.route("/revoke_api_key", methods=["POST"])
 def revoke_api_key():
-    return jsonify({"message": "API key revoked successfully", "api_key": "Wtf are you doing here?, it's free lol!"})
+    # """
+    # POST /revoke_api_key
+    # { "api_key": "SOME-EXISTING-KEY" }
+    # """
+    # api_key = request.json.get("api_key")
+    # if not api_key:
+    #     return jsonify({"error": "API key is required"}), 400
 
+    # if api_key not in API_KEYS:
+    #     return jsonify({"error": "API key not found"}), 404
+
+    # API_KEYS[api_key] = "revoked"
+    # return jsonify({"message": "API key revoked successfully", "api_key": api_key})
+    return jsonify({"message": "API key generated successfully", "api_key": "Wtf are you doing here?, its free lol!"})
+
+# ---------------------------------------------------
+# Main
+# ---------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(debug=True)  # For development use only
