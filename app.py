@@ -264,4 +264,4 @@ def revoke_api_key():
 # Main
 # ---------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)  # For development use only
+    app.run(debug=True)  # For development use only

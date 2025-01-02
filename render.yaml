@@ -1,0 +1,11 @@
+services:
+  - name: ish-api
+    type: web
+    env: python
+    region: oregon    # or pick the region you prefer
+    plan: free        # or 'starter', 'pro', etc.
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: PORT
+        value: 10000
