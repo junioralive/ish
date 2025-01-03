@@ -10,6 +10,8 @@ Where serious AI meets not-so-serious vibes. Dive into **ish Playground**, your 
 - **Unlimited API Access**: Fire up your AI projects with an API that has no limits. Yes, you read that right—**unlimited** access. Imagine hosting **15+ AI models** at blazing-fast speeds measured in mere kilobytes per second!
 
 ## Showcase
+![home](https://github.com/user-attachments/assets/020eb0fe-0963-4a0b-bb03-12b192a9e67b)
+![playground](https://github.com/user-attachments/assets/b448d5c7-9cb6-4e53-ba0e-2956713231dd)
 
 ## Installation
 
