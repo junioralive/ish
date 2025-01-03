@@ -7,15 +7,17 @@ setup(
     author="JuniorAlive",
     author_email="support@junioralive.in",
     packages=find_packages(),
-    py_modules=["ish"],  # Reference to ish.py
+    py_modules=["ish"],
     entry_points={
         "console_scripts": [
-            "ish=ish:main",  # Maps `ish` command to the `main()` function in ish.py
+            "ish=ish:local_start",
+            "ishcf=ish:cf_start",
         ],
     },
     install_requires=[
-        "flask>=2.0.0",  # Ensure Flask version compatibility
-        "cloudscraper>=1.2.0",  # Ensure the cloudscraper version is adequate
+        "flask>=2.0.0",
+        "cloudscraper>=1.2.0",
+        # "flask-cloudflared", #experimental
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

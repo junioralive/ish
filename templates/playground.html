@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>ish - Playground</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
   <link rel="icon" href="https://raw.githubusercontent.com/junioralive/ish/main/templates/image.png" type="image/png">
   <!-- Use a simple Google font for a sleek look -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -295,23 +296,25 @@
     */
     .assistant-bubble,
     .user-bubble {
-      max-width: 60%;
-      padding: 0.8rem;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.07); /* fallback style */
+      max-width: 70%; /* Increased max-width for better readability */
+      padding: 0.8rem 1rem; /* Enhanced padding for better text spacing */
+      border-radius: 12px; /* Increased border-radius for a smoother look */
+      background: rgba(255, 255, 255, 0.07); /* Fallback style */
       white-space: pre-wrap;
       word-wrap: break-word;
       position: relative;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+      font-size: 0.95rem; /* Slightly larger font for readability */
     }
-    /* Assistant bubble => AI (left side) */
+
     .assistant-bubble {
-      background: rgba(255,255,255,0.07);
+      background: rgba(255, 255, 255, 0.07);
       margin-left: 0;
       margin-right: auto;
     }
-    /* User bubble => (right side) */
+
     .user-bubble {
-      background: rgba(109,178,248,0.15);
+      background: rgba(109, 178, 248, 0.2); /* Slightly lighter for differentiation */
       margin-left: auto;
       margin-right: 0;
     }
@@ -1096,25 +1099,51 @@
     ========================================================
     */
     function fetchModels() {
+      const CACHE_KEY = "models_cache";
+      const CACHE_DURATION = 3600000; // 1 hour in milliseconds
+
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const currentTime = new Date().getTime();
+
+      if (cachedData) {
+        const { timestamp, models } = JSON.parse(cachedData);
+        if (currentTime - timestamp < CACHE_DURATION) {
+          // Use cached data if it's still valid
+          populateModelDropdown(models);
+          return;
+        }
+      }
+
+      // Fetch new data and update the cache
       fetch("/models")
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.models && Array.isArray(data.models)) {
-            modelSelect.innerHTML = "";
-            data.models.forEach((m) => {
-              const opt = document.createElement("option");
-              opt.value = m.name;
-              opt.textContent = m.name;
-              modelSelect.appendChild(opt);
-            });
-            const chat = getChatById(activeChatId);
-            if (chat) {
-              modelSelect.value = chat.model;
-            }
+            // Cache the models data
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({ timestamp: currentTime, models: data.models })
+            );
+            populateModelDropdown(data.models);
           }
         })
-        .catch(err => console.error("Error fetching models:", err));
+        .catch((err) => console.error("Error fetching models:", err));
     }
+
+    function populateModelDropdown(models) {
+      modelSelect.innerHTML = "";
+      models.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m.name;
+        opt.textContent = m.name;
+        modelSelect.appendChild(opt);
+      });
+      const chat = getChatById(activeChatId);
+      if (chat) {
+        modelSelect.value = chat.model;
+      }
+    }
+
 
     function updateSettingsFromActiveChat() {
       const chat = getChatById(activeChatId);
