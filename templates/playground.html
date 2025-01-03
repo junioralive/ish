@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ish Playground - LLM Chat</title>
+  <title>ish - Playground</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://raw.githubusercontent.com/junioralive/ish/main/templates/image.png" type="image/png">
   <!-- Use a simple Google font for a sleek look -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
@@ -594,7 +596,9 @@
             <button class="toggle-sidebar-btn" id="toggleSidebarBtn" title="Toggle Chat Sidebar">
               &#9776;  <!-- Hamburger icon -->
             </button>
-            <span>ish Playground</span>
+            <span>ish</span>
+            <img src="https://raw.githubusercontent.com/junioralive/ish/main/templates/image.png" alt="icon" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;">
+            <span>Playground</span>
           </div>
           <select class="model-select" id="modelSelect"></select>
         </div>
@@ -638,7 +642,7 @@
 
   <!-- Footer -->
   <div class="footer">
-    "Don’t be stupid and just copy-paste; even AI messes up—who cares, probably made by JuniorAlive while googling 'how to code for dummies'!
+    Don’t be stupid and just copy-paste; even AI messes up—who cares, probably made by JuniorAlive while googling 'how to code for dummies'!
   </div>
 
   <!-- Settings Modal -->
@@ -1009,10 +1013,10 @@
         const roleCircle = document.createElement("div");
         if (msg.role === "assistant") {
           roleCircle.classList.add("role-circle", "role-circle-ai");
-          roleCircle.textContent = "AI";
+          roleCircle.textContent = "ish";
         } else {
           roleCircle.classList.add("role-circle", "role-circle-user");
-          roleCircle.textContent = "U";
+          roleCircle.textContent = "You";
         }
 
         // Chat bubble
