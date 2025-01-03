@@ -1,318 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ish "because why not !" - Documentation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ish - Home</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
   <style>
-    /* Dark background, glass effect container, minimal blue accent */
     body {
       margin: 0;
       padding: 0;
+      font-family: 'Roboto', sans-serif;
       background: #0B0E12;
-      font-family: 'Arial', sans-serif;
       color: #FFFFFF;
+      text-align: center;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
       min-height: 100vh;
     }
-    .container {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 12px;
-      padding: 2rem;
-      max-width: 900px;
-      width: 90%;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
     h1 {
-      text-align: center;
-      color: #6DB2F8; /* Blue accent */
+      font-size: 2.8rem;
+      color: #6DB2F8;
       margin-bottom: 1rem;
     }
-    p, li, pre {
-      max-width: 800px;
-      line-height: 1.5;
+    p {
+      font-size: 1.2rem;
+      color: #cccccc;
+      max-width: 700px;
+      line-height: 1.6;
     }
-    ul {
-      margin-left: 1.2rem;
+    .button-container {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
     }
     a {
-      color: #6DB2F8;
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #FFFFFF;
       text-decoration: none;
+      border: 2px solid #6DB2F8;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      transition: transform 0.3s, background 0.3s;
     }
     a:hover {
+      background: #6DB2F8;
+      color: #0B0E12;
+      transform: scale(1.1);
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #6DB2F8;
+    }
+    footer a {
+      color: #F29C38;
+      text-decoration: none;
+    }
+    footer a:hover {
       text-decoration: underline;
     }
-    .section-title {
-      margin-top: 2rem;
-      margin-bottom: 0.5rem;
-      color: #6DB2F8;
-      font-weight: bold;
-      font-size: 1.2rem;
-      text-align: center;
-    }
-    .code-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 1rem 0;
-      width: 100%;
-    }
-    .copy-container {
-      position: relative;
-      width: 100%;
-      max-width: 800px;
-      margin-top: 0.5rem;
-      margin-bottom: 1.5rem;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background: #242A31;
-      color: #6DB2F8;
-      border: 1px solid #6DB2F8;
-      border-radius: 6px;
-      padding: 0.3rem 0.7rem;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    pre {
-      background: #0D1117;
-      border: 1px solid #6DB2F8;
-      border-radius: 8px;
-      padding: 1rem;
-      font-size: 0.95rem;
-      overflow-x: auto;
-      margin: 0;
-    }
-    .toggle-buttons {
-      display: flex;
-      gap: 0.5rem;
-      margin: 1rem 0;
-      justify-content: center;
-    }
-    .toggle-buttons button {
-      background: #242A31;
-      color: #6DB2F8;
-      border: 1px solid #6DB2F8;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .code-block {
-      display: none;
-    }
-    .code-block.active {
-      display: block;
-    }
   </style>
-
-  <script>
-    // Function to toggle which code block is shown
-    function showCodeBlock(id) {
-      // Hide all
-      document.querySelectorAll('.code-block').forEach(el => el.classList.remove('active'));
-      // Show the selected
-      document.getElementById(id).classList.add('active');
-    }
-
-    // Copy code to clipboard
-    function copyCode(blockId) {
-      const codeBlock = document.getElementById(blockId);
-      const codeText = codeBlock.innerText;
-      navigator.clipboard.writeText(codeText)
-        .then(() => {
-          alert("Code copied!");
-        })
-        .catch(err => {
-          console.error("Error copying code: ", err);
-        });
-    }
-  </script>
 </head>
 <body>
-  <div class="container">
-    <h1>ish <small style="font-weight:normal;">"because why not !"</small></h1>
-    <p style="text-align:center;">
-      Welcome to the <strong>ish</strong> API documentation. Enjoy free AI for your projects—because you deserve it!<br/>
-      If you need an API key, please join our Discord channel for now. We are offering unlimited free usage—later we might change our mind. Until then, enjoy!
-    </p>
-
-    <div class="section-title">Using Your API Key</div>
-    <ul>
-      <li>Once you have an API key from our Discord, include it in the HTTP header as <code>X-API-KEY: YOUR-API-KEY</code>.</li>
-    </ul>
-
-    <div class="section-title">Chat Completions Endpoint</div>
-    <p><strong>POST /chat/v1/completions</strong></p>
-    <p style="text-align:center;">Example JSON body:</p>
-    <div class="copy-container">
-      <button class="copy-btn" onclick="copyCode('json-body')">Copy</button>
-      <pre id="json-body">
-{
-  "model": "@cf/meta/llama-3.1-8b-instruct",
-  "system_prompt": "You are a helpful assistant.",
-  "messages": [
-    {"role": "user", "content": "Hello, how are you?"}
-  ],
-  "temperature": 0.7,
-  "max_tokens": 2048,
-  "stream": false
-}
-      </pre>
-    </div>
-
-    <p style="text-align:center;">
-      Below are code examples in <strong>cURL</strong>, <strong>Python</strong>, and <strong>Node.js</strong>.
-      Use the buttons to switch between them:
-    </p>
-
-    <div class="toggle-buttons">
-      <button onclick="showCodeBlock('curl-block')">cURL</button>
-      <button onclick="showCodeBlock('python-block')">Python</button>
-      <button onclick="showCodeBlock('node-block')">Node.js</button>
-    </div>
-
-    <!-- cURL code block -->
-    <div class="code-block active" id="curl-block">
-      <div class="copy-container">
-        <button class="copy-btn" onclick="copyCode('curl-code')">Copy</button>
-        <pre id="curl-code">
-curl -X POST "http://localhost:5000/chat/v1/completions" \
--H "Content-Type: application/json" \
--H "X-API-KEY: 12345" \
--d '{
-  "model": "@cf/meta/llama-3.1-8b-instruct",
-  "system_prompt": "You are a helpful assistant.",
-  "messages": [
-    {"role": "user", "content": "Hello, how are you?"}
-  ],
-  "temperature": 0.7,
-  "max_tokens": 2048,
-  "stream": false
-}'
-        </pre>
-      </div>
-    </div>
-
-    <!-- Python code block -->
-    <div class="code-block" id="python-block">
-      <div class="copy-container">
-        <button class="copy-btn" onclick="copyCode('python-code')">Copy</button>
-        <pre id="python-code">
-import requests
-
-url = "http://localhost:5000/chat/v1/completions"
-headers = {
-    "X-API-KEY": "12345",
-    "Content-Type": "application/json"
-}
-data = {
-    "model": "@cf/meta/llama-3.1-8b-instruct",
-    "system_prompt": "You are a helpful assistant.",
-    "messages": [
-        {"role": "user", "content": "Hello, how are you?"}
-    ],
-    "temperature": 0.7,
-    "max_tokens": 2048,
-    "stream": False
-}
-
-response = requests.post(url, headers=headers, json=data)
-print(response.json())
-        </pre>
-      </div>
-    </div>
-
-    <!-- Node.js code block -->
-    <div class="code-block" id="node-block">
-      <div class="copy-container">
-        <button class="copy-btn" onclick="copyCode('node-code')">Copy</button>
-        <pre id="node-code">
-const axios = require('axios');
-
-async function sendChat() {
-  const url = "http://localhost:5000/chat/v1/completions";
-  const headers = {
-    "X-API-KEY": "12345",
-    "Content-Type": "application/json"
-  };
-  const data = {
-    model: "@cf/meta/llama-3.1-8b-instruct",
-    system_prompt: "You are a helpful assistant.",
-    messages: [
-      { role: "user", content: "Hello, how are you?" }
-    ],
-    temperature: 0.7,
-    max_tokens: 2048,
-    stream: false
-  };
-
-  try {
-    const response = await axios.post(url, data, { headers });
-    console.log(response.data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-sendChat();
-        </pre>
-      </div>
-    </div>
-
-    <div class="section-title">Available Models</div>
-    <p>Below is a list of currently supported models. You can pick any of these for your <code>"model"</code> field:</p>
-    <ul style="max-width:800px;">
-      <li><code>@hf/thebloke/deepseek-coder-6.7b-base-awq</code></li>
-      <li><code>@hf/thebloke/deepseek-coder-6.7b-instruct-awq</code></li>
-      <li><code>@cf/deepseek-ai/deepseek-math-7b-instruct</code></li>
-      <li><code>@cf/thebloke/discolm-german-7b-v1-awq</code></li>
-      <li><code>@cf/tiiuae/falcon-7b-instruct</code></li>
-      <li><code>@hf/google/gemma-7b-it</code></li>
-      <li><code>@hf/thebloke/discolm-german-7b-v1-awq</code></li>
-      <li><code>@hf/thebloke/llama-2-13b-chat-awq</code></li>
-      <li><code>@cf/meta/llama-2-7b-chat-fp16</code></li>
-      <li><code>@cf/meta/llama-2-7b-chat-int8</code></li>
-      <li><code>@cf/meta/llama-3-8b-instruct</code></li>
-      <li><code>@cf/meta/llama-3-8b-instruct-awq</code></li>
-      <li><code>@cf/meta/llama-3.1-8b-instruct</code></li>
-      <li><code>@cf/meta/llama-3.1-8b-instruct-awq</code></li>
-      <li><code>@cf/meta/llama-3.1-8b-instruct-fp8</code></li>
-      <li><code>@cf/meta/llama-3.2-11b-vision-instruct</code></li>
-      <li><code>@cf/meta/llama-3.2-1b-instruct</code></li>
-      <li><code>@cf/meta/llama-3.2-3b-instruct</code></li>
-      <li><code>@cf/meta/llama-3.3-70b-instruct-fp8-fast</code></li>
-      <li><code>@hf/thebloke/llamaguard-7b-awq</code></li>
-      <li><code>@hf/meta-llama/meta-llama-3-8b-instruct</code></li>
-      <li><code>@cf/mistral/mistral-7b-instruct-v0.1</code></li>
-      <li><code>@hf/thebloke/mistral-7b-instruct-v0.1-awq</code></li>
-      <li><code>@hf/mistral/mistral-7b-instruct-v0.2</code></li>
-      <li><code>@hf/thebloke/neural-chat-7b-v3-1-awq</code></li>
-      <li><code>@cf/openchat/openchat-3.5-0106</code></li>
-      <li><code>@hf/thebloke/openhermes-2.5-mistral-7b-awq</code></li>
-      <li><code>@cf/microsoft/phi-2</code></li>
-      <li><code>@cf/qwen/qwen1.5-0.5b-chat</code></li>
-      <li><code>@cf/qwen/qwen1.5-1.8b-chat</code></li>
-      <li><code>@cf/qwen/qwen1.5-14b-chat-awq</code></li>
-      <li><code>@cf/qwen/qwen1.5-7b-chat-awq</code></li>
-      <li><code>@cf/defog/sqlcoder-7b-2</code></li>
-      <li><code>@hf/nexusflow/starling-lm-7b-beta</code></li>
-      <li><code>@cf/tinyllama/tinyllama-1.1b-chat-v1.0</code></li>
-      <li><code>@cf/fblgit/una-cybertron-7b-v2-bf16</code></li>
-      <li><code>@hf/thebloke/zephyr-7b-beta-awq</code></li>
-    </ul>
-
-    <p style="text-align:center;">
-      To fetch a live list, call <strong>GET /models</strong> with your valid <code>X-API-KEY</code>.
-    </p>
+  <h1>ish "because why not !"</h1>
+  <p>
+    Where serious AI meets not-so-serious vibes. Dive into the <strong>ish</strong> Playground, 
+    your gateway to free AI experiments—no keys, no limits, just pure unadulterated machine magic. 
+    (Warning: Side effects may include awe, amazement, and occasional WTF moments.)
+    <br/><br/>
+    Heads up: This is riding on Cloudflare's secret sauce, which only works with residential proxies,
+    so there's no easy way to self-host or replicate. It's ephemeral, fleeting, magical...
+    or something like that. But it's free, so who’s complaining?
+  </p>
+  <div class="button-container">
+    <a href="/playground">Enter Playground</a>
+    <a href="/api">Discover the API</a>
   </div>
+
+  <footer>
+    Made by junioralive. where code meets sense of humour.
+  </footer>
 </body>
 </html>

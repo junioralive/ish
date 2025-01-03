@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ish Playground - LLM Chat</title>
+  <!-- Use a simple Google font for a sleek look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
+  <!-- Marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* 
+    ========================================================
+    Global & Reset Styles 
+    ========================================================
+    */
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #0B0E12;
+      font-family: 'Roboto', sans-serif;
+      color: #FFFFFF;
+      overflow: hidden; /* prevents window scrolling */
+    }
+
+    /* 
+    ========================================================
+    Layout 
+    ========================================================
+    */
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    .app {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* 
+    ========================================================
+    Sidebar (Chat List) 
+    ========================================================
+    */
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      margin: 1rem;
+      animation: fadeInLeft 0.6s ease both;
+      transition: width 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    }
+    /* When hidden class is toggled */
+    .sidebar.hidden {
+      width: 0 !important;
+      padding: 0 !important;
+      margin: 1rem 0 1rem 1rem !important; /* Keep some left space even when closed */
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .sidebar-header h2 {
+      font-size: 1rem;
+      color: #6DB2F8;
+    }
+    .new-chat-btn {
+      background: #242A31;
+      border: 1px solid #6DB2F8;
+      color: #6DB2F8;
+      border-radius: 6px;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .new-chat-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+    .chat-list-item {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 0.5rem;
+      transition: background 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .chat-list-item.active {
+      border-color: #6DB2F8;
+      background: rgba(109,178,248,0.15);
+    }
+    .chat-list-item:hover {
+      filter: brightness(1.2);
+    }
+
+    .chat-button {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 0.9rem;
+      flex: 1;    /* let the button take up space, so actions icons are on the right */
+      text-align: left;
+      cursor: pointer;
+    }
+    .chat-list-actions {
+      display: flex;
+      gap: 0.3rem;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      color: #6DB2F8;
+      cursor: pointer;
+      transition: transform 0.2s;
+      padding: 0.3rem;
+    }
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* 
+    ========================================================
+    Main Chat Area 
+    ========================================================
+    */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin: 1rem 1rem 1rem 0;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      animation: fadeInUp 0.6s ease both;
+      /* Limit the height so we can scroll within the chat area */
+      max-height: calc(100vh - 2rem);
+      overflow: hidden;
+    }
+
+    /* 
+    ========================================================
+    Top Bar 
+    ========================================================
+    */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .left-bar-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .title {
+      font-size: 1.2rem;
+      color: #6DB2F8;
+      font-weight: bold;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toggle-sidebar-btn {
+      font-size: 1.1rem;
+      background: none;
+      border: none;
+      color: #6DB2F8;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .toggle-sidebar-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .model-select {
+      background: #0D1117;
+      border: 1px solid #6DB2F8;
+      border-radius: 6px;
+      color: #FFFFFF;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.9rem;
+      max-width: 328px;
+      text-align: center;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .nav-link {
+      background: none;
+      border: none;
+      color: #6DB2F8;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: transform 0.2s;
+    }
+    .nav-link:hover {
+      transform: scale(1.05);
+    }
+    .settings-btn {
+      background: none;
+      border: none;
+      color: #6DB2F8;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .settings-btn:hover {
+      transform: rotate(20deg);
+    }
+
+    /* 
+    ========================================================
+    Chat Display 
+    ========================================================
+    */
+    .chat-display {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      position: relative;
+    }
+    .message-container {
+      display: flex;
+      margin-bottom: 1rem;
+      align-items: flex-start;
+    }
+
+    /* 
+    ========================================================
+    Role Circle 
+    ========================================================
+    */
+    .role-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.5rem;
+      opacity: 0.8;
+      flex-shrink: 0;
+    }
+    .role-circle-user {
+      background-color: #6DB2F8;    /* user on right */
+    }
+    .role-circle-ai {
+      background-color: #F29C38;    /* assistant on left */
+    }
+
+    /* 
+    ========================================================
+    Bubbles 
+    ========================================================
+    */
+    .assistant-bubble,
+    .user-bubble {
+      max-width: 60%;
+      padding: 0.8rem;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.07); /* fallback style */
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      position: relative;
+    }
+    /* Assistant bubble => AI (left side) */
+    .assistant-bubble {
+      background: rgba(255,255,255,0.07);
+      margin-left: 0;
+      margin-right: auto;
+    }
+    /* User bubble => (right side) */
+    .user-bubble {
+      background: rgba(109,178,248,0.15);
+      margin-left: auto;
+      margin-right: 0;
+    }
+
+    /* 
+    ========================================================
+    Reverse the order for user messages so circle is on the right
+    ========================================================
+    */
+    .message-container-user {
+      justify-content: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message-container-user .role-circle {
+      margin-left: 0.5rem;
+      margin-right: 0;
+    }
+
+    /* 
+    ========================================================
+    Chat Input (icons for Send & Stop)
+    ========================================================
+    */
+    .chat-input-section {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .chat-textarea {
+      background: #0D1117;
+      border: 1px solid #6DB2F8;
+      color: #FFFFFF;
+      border-radius: 6px;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      resize: none;      /* Prevent manual resizing */
+      flex: 1;
+      min-height: 2rem;       /* minimum 1 line */
+      max-height: 12rem;      /* up to ~12 lines */
+      line-height: 1.4;
+      overflow: hidden; /* Prevent scrollbar display */
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      padding: 0.3rem;
+      cursor: pointer;
+      color: #6DB2F8;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      transition: transform 0.2s;
+    }
+    .icon-btn:hover {
+      transform: scale(1.2);
+    }
+    .disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* 
+    ========================================================
+    Settings Modal 
+    ========================================================
+    */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      animation: fadeIn 0.3s ease;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-content {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      padding: 1.5rem;
+      width: 400px;
+      max-width: 90%;
+      animation: scaleIn 0.3s ease;
+    }
+    .modal-content h3 {
+      margin-bottom: 1rem;
+      text-align: center;
+      color: #6DB2F8;
+    }
+    .modal-content label {
+      display: block;
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    .modal-close-btn {
+      background: #242A31;
+      border: 1px solid #6DB2F8;
+      color: #6DB2F8;
+      border-radius: 6px;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      width: 100%;
+      transition: transform 0.2s;
+    }
+    .modal-close-btn:hover {
+      transform: scale(1.05);
+    }
+    .modal-input {
+      background: #0D1117;
+      border: 1px solid #6DB2F8;
+      border-radius: 6px;
+      color: #fff;
+      padding: 0.5rem;
+      width: 100%;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    .modal-input::-webkit-inner-spin-button,
+    .modal-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .modal-textarea {
+      background: #0D1117;
+      border: 1px solid #6DB2F8;
+      color: #FFFFFF;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      padding: 0.5rem;
+      resize: vertical;
+      min-height: 60px;
+      width: 100%;
+      margin-top: 0.3rem;
+    }
+
+    /* 
+    ========================================================
+    Scrollbar Styles 
+    ========================================================
+    */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #6DB2F8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(109,178,248,0.7);
+    }
+
+    /* 
+    ========================================================
+    Code Block Copy Button & Highlight 
+    ========================================================
+    */
+    .code-block {
+      position: relative;
+      margin-bottom: 1rem;
+      border: 1px solid #6DB2F8; /* Highlight code snippet */
+      border-radius: 8px;
+      background: #161a1f; /* Slightly darker background */
+      padding: 0.5rem;
+      overflow: auto; /* Allow scrolling for long content */
+      word-wrap: break-word; /* Break long words */
+      white-space: pre-wrap; /* Wrap long lines */
+      max-width: 100%; /* Prevent overflow beyond container */
+    }
+
+    .code-block pre {
+      margin: 0;
+      background: transparent;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      color: #6DB2F8;
+      border: none;
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .copy-btn svg {
+      width: 16px; 
+      height: 16px;
+    }
+
+    /* 
+    ========================================================
+    Footer 
+    ========================================================
+    */
+    .footer {
+      text-align: center;
+      padding: 0.5rem 0;
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+
+    /* 
+    ========================================================
+    Animations 
+    ========================================================
+    */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes fadeInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar for multiple chats -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Chats</h2>
+        <button class="new-chat-btn" id="newChatBtn">New Chat</button>
+      </div>
+      <div class="chat-list" id="chatList"></div>
+    </div>
+
+    <!-- Main chat area -->
+    <div class="chat-area">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="left-bar-section">
+          <div class="title">
+            <button class="toggle-sidebar-btn" id="toggleSidebarBtn" title="Toggle Chat Sidebar">
+              &#9776;  <!-- Hamburger icon -->
+            </button>
+            <span>ish Playground</span>
+          </div>
+          <select class="model-select" id="modelSelect"></select>
+        </div>
+        <div class="nav-links">
+          <button class="nav-link" onclick="window.location.href='/api'">API</button>
+          <button class="settings-btn" id="settingsBtn" title="Settings">
+            &#9881; <!-- Gear Icon -->
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Display -->
+      <div class="chat-display" id="chatDisplay"></div>
+
+      <!-- Chat Input with icons -->
+      <div class="chat-input-section">
+        <textarea 
+          class="chat-textarea" 
+          id="chatInput" 
+          placeholder="Type your message..."
+        ></textarea>
+        <!-- Send Icon -->
+        <button class="icon-btn" id="sendBtn" title="Send">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+          </svg>
+        </button>
+        <!-- Stop Icon -->
+        <button class="icon-btn disabled" id="stopBtn" title="Stop">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" 
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    "Don’t be stupid and just copy-paste; even AI messes up—who cares, probably made by JuniorAlive while googling 'how to code for dummies'!
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <h3>Advanced Settings</h3>
+      <label for="systemPrompt">System Prompt</label>
+      <textarea id="systemPrompt" class="modal-textarea"></textarea>
+
+      <label for="maxTokensInput">Max Tokens</label>
+      <input type="number" id="maxTokensInput" class="modal-input" min="1" value="2048" />
+
+      <label for="temperatureInput">Temperature</label>
+      <input type="number" step="0.1" min="0" max="2" id="temperatureInput" class="modal-input" value="0.7" />
+
+      <button class="modal-close-btn" id="modalCloseBtn">Close</button>
+    </div>
+  </div>
+
+  <script>
+    /* 
+    ========================================================
+    Chat Data + State
+    ========================================================
+    */
+    let chats = [];
+    let activeChatId = null;
+    let controller = null; // For stopping SSE if needed
+    const STORAGE_KEY = "ish_playground_chats";
+
+    /* 
+    ========================================================
+    DOM Elements 
+    ========================================================
+    */
+    const sidebar           = document.getElementById("sidebar");
+    const chatListEl        = document.getElementById("chatList");
+    const newChatBtn        = document.getElementById("newChatBtn");
+    const toggleSidebarBtn  = document.getElementById("toggleSidebarBtn");
+    const chatDisplay       = document.getElementById("chatDisplay");
+    const chatInput         = document.getElementById("chatInput");
+    const sendBtn           = document.getElementById("sendBtn");
+    const stopBtn           = document.getElementById("stopBtn");
+    const modelSelect       = document.getElementById("modelSelect");
+    const settingsBtn       = document.getElementById("settingsBtn");
+    const modalOverlay      = document.getElementById("modalOverlay");
+    const modalCloseBtn     = document.getElementById("modalCloseBtn");
+    const systemPromptEl    = document.getElementById("systemPrompt");
+    const maxTokensInputEl  = document.getElementById("maxTokensInput");
+    const temperatureInputEl= document.getElementById("temperatureInput");
+
+    /* 
+    ========================================================
+    Initialization
+    ========================================================
+    */
+    loadChatsFromStorage();
+    renderChatList();
+    if (!activeChatId && chats.length > 0) {
+      activeChatId = chats[0].id;
+    } else if (!activeChatId) {
+      createNewChat("New Chat");
+    }
+    updateSettingsFromActiveChat();
+    renderConversation();
+    fetchModels(); // Populate model dropdown
+
+    /* 
+    ========================================================
+    Event Listeners
+    ========================================================
+    */
+    newChatBtn.addEventListener("click", () => {
+      createNewChat("New Chat");
+    });
+
+    toggleSidebarBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("hidden");
+    });
+
+    sendBtn.addEventListener("click", handleSend);
+    chatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+    stopBtn.addEventListener("click", stopGeneration);
+
+    settingsBtn.addEventListener("click", () => {
+      modalOverlay.classList.add("show");
+      updateSettingsFromActiveChat();
+    });
+    modalCloseBtn.addEventListener("click", () => {
+      updateActiveChatFromSettings();
+      modalOverlay.classList.remove("show");
+    });
+
+    systemPromptEl.addEventListener("input", updateActiveChatFromSettings);
+    maxTokensInputEl.addEventListener("change", updateActiveChatFromSettings);
+    temperatureInputEl.addEventListener("change", updateActiveChatFromSettings);
+
+    modelSelect.addEventListener("change", () => {
+      const chat = getChatById(activeChatId);
+      if (!chat) return;
+      chat.model = modelSelect.value;
+      saveChatsToStorage();
+    });
+
+    /* 
+    ========================================================
+    Primary Functions
+    ========================================================
+    */
+    function handleSend() {
+      if (!activeChatId) return;
+      const chat = getChatById(activeChatId);
+      if (!chat) return;
+
+      const userText = chatInput.value.trim();
+      if (!userText) return;
+
+      // If this is the first user message and the chat title is still default,
+      // rename the chat to the user message (first ~35 chars).
+      if (chat.title === "New Chat" && chat.conversation.length === 0) {
+        chat.title = userText.length > 35 ? userText.slice(0, 35) + "..." : userText;
+        renderChatList();
+      }
+
+      // Add user message
+      chat.conversation.push({ role: "user", content: userText });
+      saveChatsToStorage();
+      renderConversation();
+
+      // Clear input
+      chatInput.value = "";
+      chatInput.style.height = "2rem"; // Reset height to default size
+
+      disableInput(true);
+
+      // Prepare SSE fetch
+      controller = new AbortController();
+      const signal = controller.signal;
+
+      const payload = {
+        model: chat.model || "@cf/meta/llama-3.1-8b-instruct",
+        system_prompt: chat.systemPrompt || "You are a highly knowledgeable AI with a fantastic sense of humor. While your primary goal is to provide accurate, helpful, and comprehensive answers, you always sprinkle in a touch of wit or light-hearted humor to make interactions enjoyable. Ensure your humor is appropriate, inclusive, and never distracts from delivering a clear and useful response. Strike the perfect balance between being informative and entertaining!",
+        messages: chat.conversation.slice(-10), // only last 10 messages
+        temperature: chat.temperature || 0.7,
+        max_tokens: chat.maxTokens || 2048,
+        stream: true
+      };
+
+      fetch("/chat/v1/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal
+      })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Server Error: ${res.status}`);
+        }
+        // Insert placeholder for assistant response
+        chat.conversation.push({ role: "assistant", content: "" });
+        saveChatsToStorage();
+        renderConversation();
+        return streamResponse(res.body, chat);
+      })
+      .catch((err) => {
+        console.error("Error sending message:", err);
+        chat.conversation.push({
+          role: "assistant",
+          content: "Oops, something went wrong. Check console for details."
+        });
+        saveChatsToStorage();
+        renderConversation();
+        disableInput(false);
+      });
+    }
+
+    function stopGeneration() {
+      if (controller) {
+        controller.abort();
+        controller = null;
+        disableInput(false);
+      }
+    }
+
+    async function streamResponse(stream, chat) {
+      const reader = stream.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let done = false;
+
+      let assistantIndex = chat.conversation.length - 1;
+      let partialContent = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+          lines.forEach((line) => {
+            if (line.startsWith("data: ") && line !== "data: [DONE]") {
+              const jsonStr = line.slice("data: ".length);
+              try {
+                const jsonData = JSON.parse(jsonStr);
+                if (jsonData.response) {
+                  partialContent += jsonData.response;
+                  chat.conversation[assistantIndex].content = partialContent;
+                  saveChatsToStorage();
+                  renderConversation();
+                }
+              } catch (err) {
+                // ignore parse errors
+              }
+            }
+          });
+        }
+      }
+      disableInput(false);
+    }
+
+    function disableInput(isDisabled) {
+      if (isDisabled) {
+        chatInput.classList.add("disabled");
+        chatInput.disabled = true;
+        sendBtn.classList.add("disabled");
+        sendBtn.disabled = true;
+        stopBtn.classList.remove("disabled");
+        stopBtn.disabled = false;
+      } else {
+        chatInput.classList.remove("disabled");
+        chatInput.disabled = false;
+        sendBtn.classList.remove("disabled");
+        sendBtn.disabled = false;
+        stopBtn.classList.add("disabled");
+        stopBtn.disabled = true;
+        chatInput.focus();
+      }
+    }
+    
+    // Adjust the height of the chat input dynamically
+    function adjustChatInputHeight() {
+      chatInput.style.height = 'auto'; // Reset to auto to calculate scrollHeight correctly
+      chatInput.style.height = `${chatInput.scrollHeight}px`; // Set to content height
+    }
+
+    // Add the input event listener to the chat input
+    chatInput.addEventListener('input', adjustChatInputHeight);
+
+    /* 
+    ========================================================
+    Chat Management
+    ========================================================
+    */
+    function createNewChat(title) {
+      const newId = generateId();
+      const newChat = {
+        id: newId,
+        title,
+        conversation: [],
+        systemPrompt: "",
+        model: "@cf/meta/llama-3.1-8b-instruct",
+        maxTokens: 2048,
+        temperature: 0.7
+      };
+      chats.unshift(newChat);
+      activeChatId = newId;
+      saveChatsToStorage();
+      renderChatList();
+      renderConversation();
+      updateSettingsFromActiveChat();
+    }
+
+    function switchChat(chatId) {
+      activeChatId = chatId;
+      saveChatsToStorage();
+      renderChatList();
+      updateSettingsFromActiveChat();
+      renderConversation();
+    }
+
+    function renderChatList() {
+      chatListEl.innerHTML = "";
+      chats.forEach((c) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.classList.add("chat-list-item");
+        if (c.id === activeChatId) {
+          itemDiv.classList.add("active");
+        }
+
+        const chatBtn = document.createElement("button");
+        chatBtn.classList.add("chat-button");
+        chatBtn.textContent = c.title || "Untitled Chat";
+        chatBtn.addEventListener("click", () => switchChat(c.id));
+        itemDiv.appendChild(chatBtn);
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.classList.add("chat-list-actions");
+
+        // Edit button
+        const editBtn = document.createElement("button");
+        editBtn.classList.add("action-btn");
+        editBtn.title = "Edit Chat Title";
+        editBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5A2.121 2.121 0 1120.121 7l-9.9 9.9-4.242.707.707-4.242 9.9-9.9z"></path>
+          </svg>
+        `;
+        editBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          editChatTitle(c.id);
+        });
+        actionsDiv.appendChild(editBtn);
+
+        // Delete button
+        const delBtn = document.createElement("button");
+        delBtn.classList.add("action-btn");
+        delBtn.title = "Delete Chat";
+        delBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               xmlns="http://www.w3.org/2000/svg">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-2 14H7L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+          </svg>
+        `;
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteChat(c.id);
+        });
+        actionsDiv.appendChild(delBtn);
+
+        itemDiv.appendChild(actionsDiv);
+        chatListEl.appendChild(itemDiv);
+      });
+    }
+
+    function renderConversation() {
+      if (!activeChatId) {
+        chatDisplay.innerHTML = "";
+        return;
+      }
+      const chat = getChatById(activeChatId);
+      if (!chat) {
+        chatDisplay.innerHTML = "";
+        return;
+      }
+      chatDisplay.innerHTML = "";
+
+      chat.conversation.forEach((msg) => {
+        const msgContainer = document.createElement("div");
+        msgContainer.classList.add("message-container");
+
+        // If user => reverse it
+        if (msg.role === "user") {
+          msgContainer.classList.add("message-container-user");
+        }
+
+        // Circle for role
+        const roleCircle = document.createElement("div");
+        if (msg.role === "assistant") {
+          roleCircle.classList.add("role-circle", "role-circle-ai");
+          roleCircle.textContent = "AI";
+        } else {
+          roleCircle.classList.add("role-circle", "role-circle-user");
+          roleCircle.textContent = "U";
+        }
+
+        // Chat bubble
+        const bubble = document.createElement("div");
+        bubble.classList.add(
+          msg.role === "assistant" ? "assistant-bubble" : "user-bubble"
+        );
+        bubble.innerHTML = marked.parse(msg.content);
+
+        msgContainer.appendChild(roleCircle);
+        msgContainer.appendChild(bubble);
+        chatDisplay.appendChild(msgContainer);
+      });
+
+      attachCopyButtonsToCodeBlocks(chatDisplay);
+      chatDisplay.scrollTop = chatDisplay.scrollHeight; // ensure we see the latest message
+    }
+
+    function attachCopyButtonsToCodeBlocks(parentEl) {
+      const codeBlocks = parentEl.querySelectorAll("pre > code");
+      codeBlocks.forEach((codeBlock) => {
+        const pre = codeBlock.parentNode;
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("code-block");
+        // Move <pre> inside the .code-block
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        // Create copy button
+        const copyBtn = document.createElement("button");
+        copyBtn.classList.add("copy-btn");
+        copyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+               style="width:16px;height:16px;">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+          </svg>
+        `;
+
+        wrapper.appendChild(copyBtn);
+
+        copyBtn.addEventListener("click", () => {
+          const text = codeBlock.innerText;
+          navigator.clipboard.writeText(text)
+            .then(() => {
+              // Change to a "Copied" check icon
+              copyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="width:16px;height:16px;">
+                  <path d="M20 6L9 17l-5-5"></path>
+                </svg>
+              `;
+              setTimeout(() => {
+                // Revert back after 2 seconds
+                copyBtn.innerHTML = `
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                       style="width:16px;height:16px;">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                  </svg>
+                `;
+              }, 2000);
+            })
+            .catch((err) => console.error("Failed to copy code:", err));
+        });
+      });
+    }
+
+    /* 
+    ========================================================
+    Model Fetching & Settings
+    ========================================================
+    */
+    function fetchModels() {
+      fetch("/models")
+        .then(res => res.json())
+        .then(data => {
+          if (data.models && Array.isArray(data.models)) {
+            modelSelect.innerHTML = "";
+            data.models.forEach((m) => {
+              const opt = document.createElement("option");
+              opt.value = m.name;
+              opt.textContent = m.name;
+              modelSelect.appendChild(opt);
+            });
+            const chat = getChatById(activeChatId);
+            if (chat) {
+              modelSelect.value = chat.model;
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching models:", err));
+    }
+
+    function updateSettingsFromActiveChat() {
+      const chat = getChatById(activeChatId);
+      if (!chat) return;
+      systemPromptEl.value    = chat.systemPrompt || "";
+      maxTokensInputEl.value  = chat.maxTokens || 2048;
+      temperatureInputEl.value= chat.temperature || 0.7;
+      modelSelect.value       = chat.model || "@cf/meta/llama-3.1-8b-instruct";
+    }
+    function updateActiveChatFromSettings() {
+      const chat = getChatById(activeChatId);
+      if (!chat) return;
+      chat.systemPrompt = systemPromptEl.value;
+      chat.maxTokens    = parseInt(maxTokensInputEl.value, 10) || 2048;
+      chat.temperature  = parseFloat(temperatureInputEl.value) || 0.7;
+      chat.model        = modelSelect.value;
+      saveChatsToStorage();
+    }
+
+    /* 
+    ========================================================
+    Title Edit / Delete
+    ========================================================
+    */
+    function editChatTitle(chatId) {
+      const chat = getChatById(chatId);
+      if (!chat) return;
+      const newTitle = prompt("Enter a new title:", chat.title);
+      if (newTitle !== null && newTitle.trim() !== "") {
+        chat.title = newTitle.trim();
+        saveChatsToStorage();
+        renderChatList();
+      }
+    }
+
+    function deleteChat(chatId) {
+      if (!confirm("Are you sure you want to delete this chat?")) return;
+      chats = chats.filter((c) => c.id !== chatId);
+      if (activeChatId === chatId) {
+        activeChatId = chats.length > 0 ? chats[0].id : null;
+      }
+      saveChatsToStorage();
+      renderChatList();
+      renderConversation();
+    }
+
+    /* 
+    ========================================================
+    Utilities
+    ========================================================
+    */
+    function getChatById(id) {
+      return chats.find((c) => c.id === id);
+    }
+    function generateId() {
+      return `chat-${Math.random().toString(36).substring(2, 10)}`;
+    }
+    function loadChatsFromStorage() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          chats = JSON.parse(stored);
+          if (chats.length > 0 && !activeChatId) {
+            activeChatId = chats[0].id;
+          }
+        } else {
+          chats = [];
+        }
+      } catch(e) {
+        chats = [];
+      }
+    }
+    function saveChatsToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    }
+  </script>
+</body>
+</html>

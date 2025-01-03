@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify, Response, render_template
-from functools import wraps
+from flask import Flask, request, jsonify, Response, render_template, send_from_directory
 import json
 import cloudscraper
 import time
@@ -9,32 +8,8 @@ import uuid
 # CloudflareRequester
 # ---------------------------------------------------
 class CloudflareRequester:
-    def __init__(
-        self,
-        model="@cf/meta/llama-3.1-8b-instruct",
-        # Additional parameters to tweak CloudScraper
-        interpreter="native",  # Or 'nodejs', 'js2py', 'chakra', etc.
-        ecdhCurve="secp384r1", # Another ECDH curve might help with TLS handshake
-        debug=False
-    ):
-        # Example usage of advanced parameters:
-        self.scraper = cloudscraper.create_scraper(
-            interpreter=interpreter,
-            ecdhCurve=ecdhCurve,
-            debug=debug,
-            # Force a custom or random "browser" user agent:
-            browser={"browser": "chrome", "platform": "windows", "desktop": True, "mobile": False},
-            # If you'd like to specify a custom user-agent or cipher suite, you could do:
-            # cipherSuite="ECDHE-ECDSA-AES128-GCM-SHA256",
-            # user_agent="MyCustomAgent/1.0"
-        )
-
-        # Warm up by hitting the root domain—so CloudScraper attempts to solve any challenge
-        # This may store cookies in the scraper before calling /api/inference
-        try:
-            self.scraper.get("https://playground.ai.cloudflare.com")
-        except Exception as e:
-            print(f"[Warm Up] Error warming up Cloudscraper: {e}")
+    def __init__(self, model="@cf/meta/llama-3.1-8b-instruct"):
+        self.scraper = cloudscraper.create_scraper()
 
         # Endpoints
         self.chat_endpoint = "https://playground.ai.cloudflare.com/api/inference"
@@ -43,8 +18,6 @@ class CloudflareRequester:
         self.headers = {
             "Accept": "text/event-stream",
             "Content-Type": "application/json",
-            # The user agent is often overridden by CloudScraper’s internal logic
-            # but we can keep a fallback here.
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         }
         self.model = model
@@ -78,23 +51,20 @@ class CloudflareRequester:
         Send the Chat request to Cloudflare's Playground API.
         """
         payload = self.create_payload(system_prompt, messages, temperature, max_tokens, stream)
-
-        # Optional: re-warm the domain each request, in case ephemeral serverless resets cookies
-        # self.scraper.get("https://playground.ai.cloudflare.com")
-
         response = self.scraper.post(
             self.chat_endpoint,
             headers=self.headers,
             data=json.dumps(payload),
-            stream=True
+            stream=True  # We always open in streaming mode so we can parse SSE lines
         )
 
         if not response.ok:
-            # Raise an exception showing status code and text
-            # This will bubble up to your Flask route
             raise Exception(f"Request failed: {response.status_code} {response.reason}")
 
-        return self._process_stream(response) if stream else self._process_full(response)
+        if stream:
+            return self._process_stream(response)
+        else:
+            return self._process_full(response)
 
     def _process_stream(self, response):
         """
@@ -121,50 +91,56 @@ class CloudflareRequester:
 
     def get_models(self):
         """
-        Fetch the list of models from the Cloudflare Playground.
+        Fetch the list of models from Cloudflare Playground.
         """
-        # Optional: warm up again before calling /api/models
-        # self.scraper.get("https://playground.ai.cloudflare.com")
-
         response = self.scraper.get(self.models_endpoint, headers=self.headers)
         if not response.ok:
             raise Exception(f"Model fetch failed: {response.status_code} {response.reason}")
         return response.json()
+
 
 # ---------------------------------------------------
 # Flask App
 # ---------------------------------------------------
 app = Flask(__name__)
 
-API_KEYS = {
-    "ish_ajl27Qo8pHgq5jZzIdoC178MpOk0oKWExGkn": "active",
-    "ish_XD8IdgDTbMPPQI9AaBfiX0E1JjKjxswU4pfL": "active",
-    "ish_i7YkVQ44OkF3v0BfHCb30JZhTaxPIl65EDlW": "active",
-    "ish_0Ewk07qYGzxQaU1wpiYcW5NqkzmUxvm6IgJo": "active",
-    "ish_QjH1M2SXsryBMm6kz4gdllJwgGFfnreTRhhX": "active",
-    "ish_WhpU08xPDt8g9Riusgjxt2G9q1TwG4VOiHly": "active",
-    "ish_hU92QWtYUWQZz37Z7BudJK3L8QDP0mLjmxWG": "active",
-    "ish_ULFSj8kj6h1HPd6xVBJwY0Rq6jzNr0m3X5rX": "active",
-    "ish_05cRwco4SRdOldAkCTWdNlMizzA95pyOARFR": "active",
-    "ish_YUJRIxzCouub5R4rmmC8mD6kj6C0JxJx3WQM": "active",
-}
+# ---------------------------------------------------
+# Serve index.html at the root
+# ---------------------------------------------------
 
-def require_api_key(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        api_key = request.headers.get("X-API-KEY")
-        if not api_key or API_KEYS.get(api_key) != "active":
-            return jsonify({"error": "Invalid or missing API key"}), 403
-        return f(*args, **kwargs)
-    return decorated_function
+@app.route('/static/templates')
+def static_files(path):
+    return send_from_directory('static', path)
 
 @app.route("/")
-def documentation():
+def home():
+    """
+    Render the Playground UI.
+    """
     return render_template("index.html")
 
+@app.route("/playground")
+def playground():
+    """
+    Render the Playground UI.
+    """
+    return render_template("playground.html")
+
+@app.route("/api")
+def api_documentation():
+    """
+    Render the Playground UI.
+    """
+    return render_template("api.html")
+
+# ---------------------------------------------------
+# Chat Completions
+# ---------------------------------------------------
 @app.route("/chat/v1/completions", methods=["POST"])
-@require_api_key
 def chat_completions():
+    """
+    POST /chat/v1/completions
+    """
     try:
         data = request.json
         if not data:
@@ -180,14 +156,9 @@ def chat_completions():
         if not messages:
             return jsonify({"error": "At least one message is required."}), 400
 
-        # Example of passing advanced arguments:
-        requester = CloudflareRequester(
-            model=model,
-            interpreter="native",   # or "nodejs", "js2py", "chakra", etc.
-            ecdhCurve="secp384r1",  # or "prime256v1"
-            debug=False             # turn on if you want verbose debugging
-        )
+        requester = CloudflareRequester(model=model)
 
+        # If stream=True, return SSE event stream
         if stream:
             generator = requester.send_request(
                 system_prompt=system_prompt,
@@ -198,6 +169,7 @@ def chat_completions():
             )
             return Response(generator, content_type="text/event-stream")
 
+        # Otherwise, do a single call and return JSON
         response_text = requester.send_request(
             system_prompt=system_prompt,
             messages=messages,
@@ -229,29 +201,25 @@ def chat_completions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# ---------------------------------------------------
+# List Models
+# ---------------------------------------------------
 @app.route("/models", methods=["GET"])
-@require_api_key
 def list_models():
+    """
+    GET /models
+    """
     try:
-        # Example: pass advanced arguments if desired
-        requester = CloudflareRequester(
-            model="@cf/meta/llama-3.1-8b-instruct",
-            interpreter="native",
-            ecdhCurve="secp384r1",
-            debug=False
-        )
+        requester = CloudflareRequester()
         models_data = requester.get_models()
         return jsonify(models_data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/generate_api_key", methods=["POST"])
-def generate_api_key():
-    return jsonify({"message": "API key generated successfully", "api_key": "Wtf are you doing here?, it's free lol!"})
 
-@app.route("/revoke_api_key", methods=["POST"])
-def revoke_api_key():
-    return jsonify({"message": "API key revoked successfully", "api_key": "Wtf are you doing here?, it's free lol!"})
-
+# ---------------------------------------------------
+# Main
+# ---------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=3666)  # For development use only
