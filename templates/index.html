@@ -25,6 +25,24 @@
       color: #6DB2F8;
       margin-bottom: 1rem;
     }
+    .typing-animation {
+      font-size: 1.5rem;
+      color: #F29C38;
+      height: 2rem;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #F29C38;
+      display: inline-block;
+      animation: caret-blink 0.7s steps(1) infinite;
+    }
+    @keyframes caret-blink {
+      0%, 100% {
+        border-color: transparent;
+      }
+      50% {
+        border-color: #F29C38;
+      }
+    }
     p {
       font-size: 1.2rem;
       color: #cccccc;
@@ -64,7 +82,6 @@
     }
     .discord-link:hover {
       color: #FFD700;
-      text-decoration: underline;
     }
     footer {
       margin-top: 2rem;
@@ -81,11 +98,12 @@
   </style>
 </head>
 <body>
-    <h1>
-        ish
-        <img src="https://raw.githubusercontent.com/junioralive/ish/main/templates/image.png" alt="icon" style="width: 40px; height: 40px; vertical-align: middle; margin-right: 10px;">
-        "because why not !"
-    </h1>      
+  <h1>
+    ish
+    <img src="https://raw.githubusercontent.com/junioralive/ish/main/templates/image.png" alt="icon" style="width: 40px; height: 40px; vertical-align: middle; margin-right: 10px;">
+    "because why not !"
+  </h1>
+  <div class="typing-animation" id="typing-text"></div>
   <p>
     Where serious AI meets not-so-serious vibes. Dive into the <strong>ish</strong> Playground, 
     your gateway to free AI experiments—no keys, no limits, just pure unadulterated machine magic. 
@@ -97,11 +115,48 @@
   </p>
   <div class="button-container">
     <a href="/playground">Enter Playground</a>
+    <a href="/database-playground">Database Chat</a>
+    <a href="/doc-playground">Documents Chat</a>
     <a href="/api">Discover the API</a>
   </div>
   <a href="https://discord.com/invite/cwDTVKyKJz" class="discord-link">Join us on Discord</a>
   <footer>
     Made by junioralive. where code meets sense of humour.
   </footer>
+
+  <script>
+    const phrases = ["Chat with LLMS", "Chat with Documents", "Chat with Database", "Discover the API"];
+    let currentPhraseIndex = 0;
+    const typingTextElement = document.getElementById('typing-text');
+
+    function typeAndDeletePhrase(phraseIndex) {
+      const phrase = phrases[phraseIndex];
+      let charIndex = 0;
+
+      function typeChar() {
+        if (charIndex < phrase.length) {
+          typingTextElement.textContent += phrase.charAt(charIndex);
+          charIndex++;
+          setTimeout(typeChar, 100);
+        } else {
+          setTimeout(deletePhrase, 1000);
+        }
+      }
+
+      function deletePhrase() {
+        if (typingTextElement.textContent.length > 0) {
+          typingTextElement.textContent = typingTextElement.textContent.slice(0, -1);
+          setTimeout(deletePhrase, 50);
+        } else {
+          currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
+          setTimeout(() => typeAndDeletePhrase(currentPhraseIndex), 500);
+        }
+      }
+
+      typeChar();
+    }
+
+    typeAndDeletePhrase(currentPhraseIndex);
+  </script>
 </body>
 </html>

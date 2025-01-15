@@ -115,6 +115,33 @@
     .code-block.active {
       display: block;
     }
+
+    .models-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      max-width: 900px;
+      margin: 1rem auto;
+    }
+
+    .bubble {
+      background: rgba(109, 178, 248, 0.2);
+      color: #6DB2F8;
+      border: 1px solid #6DB2F8;
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      text-align: center;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .bubble:hover {
+      transform: scale(1.05);
+      background: rgba(109, 178, 248, 0.4);
+    }
   </style>
 
   <script>
@@ -128,11 +155,26 @@
 
     // Copy code to clipboard
     function copyCode(blockId) {
+      const copyBtn = document.querySelector(`.copy-btn[onclick="copyCode('${blockId}')"]`);
       const codeBlock = document.getElementById(blockId);
       const codeText = codeBlock.innerText;
+
       navigator.clipboard.writeText(codeText)
         .then(() => {
-          alert("Code copied!");
+          // Change the icon to a check mark
+          copyBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>`;
+          
+          // Reset to the original copy icon after 2 seconds
+          setTimeout(() => {
+            copyBtn.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6DB2F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>`;
+          }, 2000);
         })
         .catch(err => {
           console.error("Error copying code: ", err);
@@ -157,7 +199,12 @@
     <p><strong>POST /chat/v1/completions</strong></p>
     <p style="text-align:center;">Example JSON body:</p>
     <div class="copy-container">
-      <button class="copy-btn" onclick="copyCode('json-body')">Copy</button>
+      <button class="copy-btn" onclick="copyCode('json-body')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6DB2F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>      
       <pre id="json-body">
 {
   "model": "@cf/meta/llama-3.1-8b-instruct",
@@ -185,8 +232,14 @@
     <!-- cURL code block -->
     <div class="code-block active" id="curl-block">
       <div class="copy-container">
-        <button class="copy-btn" onclick="copyCode('curl-code')">Copy</button>
+        <button class="copy-btn" onclick="copyCode('curl-code')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6DB2F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
         <pre id="curl-code">
+          <br>
 curl -X POST "http://localhost:5000/chat/v1/completions" \
 -H "Content-Type: application/json" \
 -d '{
@@ -273,50 +326,50 @@ sendChat();
       feeling generous today, you can pick from any of these. But again, if they wake up one morning 
       and decide to shut down the party, well... we’ll be gone. Until then, type away and enjoy.
     </p>
-    <ul style="max-width:800px;">
-      <li><code>@hf/thebloke/deepseek-coder-6.7b-base-awq</code></li>
-      <li><code>@hf/thebloke/deepseek-coder-6.7b-instruct-awq</code></li>
-      <li><code>@cf/deepseek-ai/deepseek-math-7b-instruct</code></li>
-      <li><code>@cf/thebloke/discolm-german-7b-v1-awq</code></li>
-      <li><code>@cf/tiiuae/falcon-7b-instruct</code></li>
-      <li><code>@hf/google/gemma-7b-it</code></li>
-      <li><code>@hf/thebloke/discolm-german-7b-v1-awq</code></li>
-      <li><code>@hf/thebloke/llama-2-13b-chat-awq</code></li>
-      <li><code>@cf/meta/llama-2-7b-chat-fp16</code></li>
-      <li><code>@cf/meta/llama-2-7b-chat-int8</code></li>
-      <li><code>@cf/meta/llama-3-8b-instruct</code></li>
-      <li><code>@cf/meta/llama-3-8b-instruct-awq</code></li>
-      <li><code>@cf/meta/llama-3.1-8b-instruct</code></li>
-      <li><code>@cf/meta/llama-3.1-8b-instruct-awq</code></li>
-      <li><code>@cf/meta/llama-3.1-8b-instruct-fp8</code></li>
-      <li><code>@cf/meta/llama-3.2-11b-vision-instruct</code></li>
-      <li><code>@cf/meta/llama-3.2-1b-instruct</code></li>
-      <li><code>@cf/meta/llama-3.2-3b-instruct</code></li>
-      <li><code>@cf/meta/llama-3.3-70b-instruct-fp8-fast</code></li>
-      <li><code>@hf/thebloke/llamaguard-7b-awq</code></li>
-      <li><code>@hf/meta-llama/meta-llama-3-8b-instruct</code></li>
-      <li><code>@cf/mistral/mistral-7b-instruct-v0.1</code></li>
-      <li><code>@hf/thebloke/mistral-7b-instruct-v0.1-awq</code></li>
-      <li><code>@hf/mistral/mistral-7b-instruct-v0.2</code></li>
-      <li><code>@hf/thebloke/neural-chat-7b-v3-1-awq</code></li>
-      <li><code>@cf/openchat/openchat-3.5-0106</code></li>
-      <li><code>@hf/thebloke/openhermes-2.5-mistral-7b-awq</code></li>
-      <li><code>@cf/microsoft/phi-2</code></li>
-      <li><code>@cf/qwen/qwen1.5-0.5b-chat</code></li>
-      <li><code>@cf/qwen/qwen1.5-1.8b-chat</code></li>
-      <li><code>@cf/qwen/qwen1.5-14b-chat-awq</code></li>
-      <li><code>@cf/qwen/qwen1.5-7b-chat-awq</code></li>
-      <li><code>@cf/defog/sqlcoder-7b-2</code></li>
-      <li><code>@hf/nexusflow/starling-lm-7b-beta</code></li>
-      <li><code>@cf/tinyllama/tinyllama-1.1b-chat-v1.0</code></li>
-      <li><code>@cf/fblgit/una-cybertron-7b-v2-bf16</code></li>
-      <li><code>@hf/thebloke/zephyr-7b-beta-awq</code></li>
-    </ul>
-
+    <div class="models-container">
+      <div class="bubble">@hf/thebloke/deepseek-coder-6.7b-base-awq</div>
+      <div class="bubble">@hf/thebloke/deepseek-coder-6.7b-instruct-awq</div>
+      <div class="bubble">@cf/deepseek-ai/deepseek-math-7b-instruct</div>
+      <div class="bubble">@cf/thebloke/discolm-german-7b-v1-awq</div>
+      <div class="bubble">@cf/tiiuae/falcon-7b-instruct</div>
+      <div class="bubble">@hf/google/gemma-7b-it</div>
+      <div class="bubble">@hf/thebloke/discolm-german-7b-v1-awq</div>
+      <div class="bubble">@hf/thebloke/llama-2-13b-chat-awq</div>
+      <div class="bubble">@cf/meta/llama-2-7b-chat-fp16</div>
+      <div class="bubble">@cf/meta/llama-2-7b-chat-int8</div>
+      <div class="bubble">@cf/meta/llama-3-8b-instruct</div>
+      <div class="bubble">@cf/meta/llama-3-8b-instruct-awq</div>
+      <div class="bubble">@cf/meta/llama-3.1-8b-instruct</div>
+      <div class="bubble">@cf/meta/llama-3.1-8b-instruct-awq</div>
+      <div class="bubble">@cf/meta/llama-3.1-8b-instruct-fp8</div>
+      <div class="bubble">@cf/meta/llama-3.2-11b-vision-instruct</div>
+      <div class="bubble">@cf/meta/llama-3.2-1b-instruct</div>
+      <div class="bubble">@cf/meta/llama-3.2-3b-instruct</div>
+      <div class="bubble">@cf/meta/llama-3.3-70b-instruct-fp8-fast</div>
+      <div class="bubble">@hf/thebloke/llamaguard-7b-awq</div>
+      <div class="bubble">@hf/meta-llama/meta-llama-3-8b-instruct</div>
+      <div class="bubble">@cf/mistral/mistral-7b-instruct-v0.1</div>
+      <div class="bubble">@hf/thebloke/mistral-7b-instruct-v0.1-awq</div>
+      <div class="bubble">@hf/mistral/mistral-7b-instruct-v0.2</div>
+      <div class="bubble">@hf/thebloke/neural-chat-7b-v3-1-awq</div>
+      <div class="bubble">@cf/openchat/openchat-3.5-0106</div>
+      <div class="bubble">@hf/thebloke/openhermes-2.5-mistral-7b-awq</div>
+      <div class="bubble">@cf/microsoft/phi-2</div>
+      <div class="bubble">@cf/qwen/qwen1.5-0.5b-chat</div>
+      <div class="bubble">@cf/qwen/qwen1.5-1.8b-chat</div>
+      <div class="bubble">@cf/qwen/qwen1.5-14b-chat-awq</div>
+      <div class="bubble">@cf/qwen/qwen1.5-7b-chat-awq</div>
+      <div class="bubble">@cf/defog/sqlcoder-7b-2</div>
+      <div class="bubble">@hf/nexusflow/starling-lm-7b-beta</div>
+      <div class="bubble">@cf/tinyllama/tinyllama-1.1b-chat-v1.0</div>
+      <div class="bubble">@cf/fblgit/una-cybertron-7b-v2-bf16</div>
+      <div class="bubble">@hf/thebloke/zephyr-7b-beta-awq</div>
+    </div>
     <p style="text-align:center;">
       If you want a live list, just do a cheeky <strong>GET /models</strong>. 
       No keys, no tokens, no disclaimers (except the one above!). Have fun!
     </p>
+
   </div>
 </body>
 </html>
